@@ -3,9 +3,146 @@
 Project for Kubernetes controllers course by fwdays
 
 
+## step 2 zerolog
+
+### Prerequisites
+- [Go](https://golang.org/dl/) 1.24 or newer
+- [cobra-cli](https://github.com/spf13/cobra-cli) installed:
+  ```sh
+  go install github.com/spf13/cobra-cli@latest
+  ```
+- [zerolog](https://github.com/rs/zerolog) installed:
+    ```sh
+    go get github.com/rs/zerolog/log
+    ```
+
+### Zerolog usage quicknotes
+
+**zerolog** allows for logging at the following levels (from highest to lowest):
+
+* panic (`zerolog.PanicLevel`, 5)
+* fatal (`zerolog.FatalLevel`, 4)
+* error (`zerolog.ErrorLevel`, 3)
+* warn (`zerolog.WarnLevel`, 2)
+* info (`zerolog.InfoLevel`, 1)
+* debug (`zerolog.DebugLevel`, 0)
+* trace (`zerolog.TraceLevel`, -1)
+
+**zerolog** allows data to be added to log messages in the form of key:value pairs. The data added to the message adds "context" about the log event that can be critical for debugging as well as myriad other purposes. An example of this is below:
+
+```go
+package main
+
+import (
+    "github.com/rs/zerolog"
+    "github.com/rs/zerolog/log"
+)
+
+func main() {
+    zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+
+    log.Debug().
+        Str("Scale", "833 cents").
+        Float64("Interval", 833.09).
+        Msg("Fibonacci is everywhere")
+    
+    log.Debug().
+        Str("Name", "Tom").
+        Send()
+}
+
+// Output: {"level":"debug","Scale":"833 cents","Interval":833.09,"time":1562212768,"message":"Fibonacci is everywhere"}
+// Output: {"level":"debug","Name":"Tom","time":1562212768}
+```
+
+#### Add file and line number to log
+
+Equivalent of `Llongfile`:
+
+```go
+log.Logger = log.With().Caller().Logger()
+log.Info().Msg("hello world")
+
+// Output: {"level": "info", "message": "hello world", "caller": "/go/src/your_project/some_file:21"}
+```
+
+Equivalent of `Lshortfile`:
+
+```go
+zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
+    return filepath.Base(file) + ":" + strconv.Itoa(line)
+}
+log.Logger = log.With().Caller().Logger()
+log.Info().Msg("hello world")
+
+// Output: {"level": "info", "message": "hello world", "caller": "some_file:21"}
+```
+
+
+#### Pretty logging
+
+To log a human-friendly, colorized output, use `zerolog.ConsoleWriter`:
+
+```go
+log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+
+log.Info().Str("foo", "bar").Msg("Hello world")
+```
+// Output: 3:04PM INF Hello World foo=bar
+
+#### Error Logging with Stacktrace
+
+Using `github.com/pkg/errors`, you can add a formatted stacktrace to your errors. 
+
+```go
+package main
+
+import (
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/pkgerrors"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+)
+
+func main() {
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+
+	err := outer()
+	log.Error().Stack().Err(err).Msg("")
+}
+
+func inner() error {
+	return errors.New("seems we have an error here")
+}
+
+func middle() error {
+	err := inner()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func outer() error {
+	err := middle()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Output: {"level":"error","stack":[{"func":"inner","line":"20","source":"errors.go"},{"func":"middle","line":"24","source":"errors.go"},{"func":"outer","line":"32","source":"errors.go"},{"func":"main","line":"15","source":"errors.go"},{"func":"main","line":"204","source":"proc.go"},{"func":"goexit","line":"1374","source":"asm_amd64.s"}],"error":"seems we have an error here","time":1609086683}
+```
+
+> zerolog.ErrorStackMarshaler must be set in order for the stack to output anything.
+
+
+
 ### step 1 cobra-cli 
 
-## Prerequisites
+#### Prerequisites
 
 - [Go](https://golang.org/dl/) 1.24 or newer
 - [cobra-cli](https://github.com/spf13/cobra-cli) installed:

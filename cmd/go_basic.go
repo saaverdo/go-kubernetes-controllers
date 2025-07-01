@@ -3,14 +3,17 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
-var goBasicCmd = &cobra.Command{
-	Use:   "go-basic",
+var startCmd = &cobra.Command{
+	Use:   "start",
 	Short: "Run golang basic code",
 	Run: func(cmd *cobra.Command, args []string) {
 		//Go basic code to run functions
+		log.Debug().Msg("Initializing k8s cluster structure")
 		k8s := Kubernetes{
 			Name:    "k8s-demo-cluster",
 			Version: "1.31",
@@ -19,10 +22,10 @@ var goBasicCmd = &cobra.Command{
 				return 10
 			},
 		}
-
+		log.Debug().Msg("k8s cluster structure initialized")
 		//print users
 		k8s.GetUsers()
-		fmt.Println("=================")
+
 		//add new user to struct
 		k8s.AddNewUser("nameless_one")
 
@@ -32,7 +35,8 @@ var goBasicCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(goBasicCmd)
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	rootCmd.AddCommand(startCmd)
 
 }
 
@@ -45,11 +49,13 @@ type Kubernetes struct {
 }
 
 func (k8s Kubernetes) GetUsers() {
+	log.Debug().Msg("Printing users")
 	for _, user := range k8s.Users {
 		fmt.Println(user)
 	}
 }
 
 func (k8s *Kubernetes) AddNewUser(user string) {
+	log.Debug().Msgf("Adding user %s", user)
 	k8s.Users = append(k8s.Users, user)
 }
