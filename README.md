@@ -3,6 +3,54 @@
 Project for Kubernetes controllers course by fwdays
 
 
+
+## step 3 **Support log-level flags**
+
+   Example usage in your `main.go`:
+   ```go
+
+       rootCmd.PersistentFlags().StringVar(&logLevel, "log-level", "info", "Set log level: trace, debug, info, warn, error")
+       rootCmd.Execute()
+   }
+   ```
+
+   Build your CLI:
+   ```sh
+   go build -o controller
+   ```
+
+   You can now run your CLI with different log levels:
+   ```sh
+   ./controller --log-level debug
+   ./controller start --log-level trace
+   ```
+### Notes
+Flags can be binded with viper [link](https://github.com/spf13/cobra/blob/main/site/content/user_guide.md#bind-flags-with-config)  
+
+#### global logging setup:
+
+`PersistentFlags` - package level flag  
+```go
+func init() {
+rootCmd.PersistentFlags().StringVar(&logLevel, "log-level", "", "Logging level")
+}
+```
+
+`PersistentPreRun` - 
+```go
+var rootCmd = &cobra.Command{
+    ...
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		initLogger()
+    },
+```
+
+or use `OnInitialize()` in _init_:  
+```go
+func init() {
+	cobra.OnInitialize(initConfig)
+```
+
 ## step 2 zerolog
 
 ### Prerequisites
@@ -15,6 +63,19 @@ Project for Kubernetes controllers course by fwdays
     ```sh
     go get github.com/rs/zerolog/log
     ```
+
+###
+
+Build your CLI:
+```sh
+go build -o controller
+```
+
+Run your CLI (shows help by default):
+```sh
+./controller
+```
+
 
 ### Zerolog usage quicknotes
 
