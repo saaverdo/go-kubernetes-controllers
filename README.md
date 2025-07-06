@@ -3,6 +3,38 @@
 Project for Kubernetes controllers course by fwdays
 ---
 
+
+## step 6 List Kubernetes Deployments with client-go
+
+   - Added a new `list` command using [k8s.io/client-go](https://pkg.go.dev/k8s.io/client-go).
+   - The command connects to the k8s cluster and prints names of deployments in provided namespace.  
+   - Supports the `--log-level` flag for controlling log verbosity.  
+   - Uses zerolog for logging.  
+   - requires path to cluster config provided via `--config`|`-c` flag or in `KUBECONFIG` env var.
+   - Flag has precedence over env var.    
+   - Uses viper for env var handling. 
+   - Supports the `--namespace`|`-n` flag to set target namespace. Default value is `"default"`
+
+   **Usage:**
+   ```sh
+   git switch step6-list-deployments
+
+   go run main.go list --config ~/.kube/config --log-level debug
+
+   KUBECONFIG="~/.kube/k3s_config" go run main.go list -n jenkins --log-level trace
+   ```
+
+   **What it does:**
+   
+   Uses "k8s.io/client-go" package to interact with k8s cluster.
+   First creates config structure using `clientcmd.BuildConfigFromFlags`, then run `kubernetes.NewForConfig` with the config and as a result get `kubernetes.Clientset` - our main structure, client to interact with kubernetes cluster.
+
+   To get values from env var and/or flag, besides binds in `init()` we need to set variable with `viper.GetString` in command's `Run`:
+    ```go
+   	Run: func(cmd *cobra.Command, args []string) {
+		kubeConfigPath = viper.GetString("config")
+    ```
+
 ## step 4 **FastHTTP Server Command**
 
    - Added a new `server` command using [fasthttp](https://github.com/valyala/fasthttp).
